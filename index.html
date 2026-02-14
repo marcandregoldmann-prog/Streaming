@@ -1,0 +1,2004 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0a0a0f">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>StreamHub</title>
+    <link rel="manifest" href="manifest.json">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-card: #1a1a26;
+            --bg-card-hover: #222233;
+            --bg-elevated: #252538;
+            --text-primary: #f0f0f5;
+            --text-secondary: #8888aa;
+            --text-muted: #555570;
+            --accent-red: #ff3366;
+            --accent-red-glow: rgba(255, 51, 102, 0.3);
+            --accent-blue: #3366ff;
+            --accent-blue-glow: rgba(51, 102, 255, 0.3);
+            --accent-cyan: #00ccbb;
+            --accent-cyan-glow: rgba(0, 204, 187, 0.3);
+            --accent-purple: #9933ff;
+            --accent-purple-glow: rgba(153, 51, 255, 0.3);
+            --accent-orange: #ff8833;
+            --accent-orange-glow: rgba(255, 136, 51, 0.3);
+            --accent-green: #33cc66;
+            --accent-green-glow: rgba(51, 204, 102, 0.3);
+            --border: rgba(255,255,255,0.06);
+            --radius: 14px;
+            --radius-sm: 8px;
+            --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            min-height: 100dvh;
+            overflow-x: hidden;
+            padding-bottom: 90px;
+        }
+
+        /* ===== BACKGROUND EFFECTS ===== */
+        .bg-effects {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+        .bg-effects::before {
+            content: '';
+            position: absolute;
+            top: -40%; left: -20%;
+            width: 80%; height: 80%;
+            background: radial-gradient(ellipse, rgba(255,51,102,0.06) 0%, transparent 70%);
+            animation: floatBlob 20s ease-in-out infinite;
+        }
+        .bg-effects::after {
+            content: '';
+            position: absolute;
+            bottom: -30%; right: -20%;
+            width: 70%; height: 70%;
+            background: radial-gradient(ellipse, rgba(51,102,255,0.05) 0%, transparent 70%);
+            animation: floatBlob 25s ease-in-out infinite reverse;
+        }
+        @keyframes floatBlob {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(30px, -40px) scale(1.1); }
+            66% { transform: translate(-20px, 20px) scale(0.95); }
+        }
+
+        /* ===== NOISE OVERLAY ===== */
+        .noise {
+            position: fixed; inset: 0; pointer-events: none; z-index: 1;
+            opacity: 0.025;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+            background-repeat: repeat;
+        }
+
+        /* ===== MAIN CONTENT ===== */
+        .app-container {
+            position: relative;
+            z-index: 2;
+            max-width: 520px;
+            margin: 0 auto;
+            padding: 0 16px;
+        }
+
+        /* ===== HEADER ===== */
+        .header {
+            padding: 24px 0 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .logo-icon {
+            width: 42px; height: 42px;
+            background: linear-gradient(135deg, var(--accent-red), var(--accent-purple));
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px;
+            box-shadow: 0 4px 20px var(--accent-red-glow);
+        }
+        .logo-text {
+            font-size: 1.6em;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, var(--text-primary), var(--text-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .header-actions {
+            display: flex; gap: 8px;
+        }
+        .icon-btn {
+            width: 40px; height: 40px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            color: var(--text-secondary);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 18px;
+            position: relative;
+        }
+        .icon-btn:hover, .icon-btn:active {
+            background: var(--bg-card-hover);
+            color: var(--text-primary);
+            transform: translateY(-1px);
+        }
+        .icon-btn.active {
+            background: var(--accent-red);
+            color: white;
+            border-color: var(--accent-red);
+            box-shadow: 0 4px 15px var(--accent-red-glow);
+        }
+        .badge {
+            position: absolute;
+            top: -4px; right: -4px;
+            width: 18px; height: 18px;
+            background: var(--accent-red);
+            border-radius: 50%;
+            font-size: 10px;
+            display: flex; align-items: center; justify-content: center;
+            color: white;
+            font-weight: 700;
+            border: 2px solid var(--bg-primary);
+        }
+
+        /* ===== SEARCH BAR ===== */
+        .search-bar {
+            position: relative;
+            margin-bottom: 16px;
+        }
+        .search-bar input {
+            width: 100%;
+            padding: 13px 16px 13px 44px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            color: var(--text-primary);
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.95em;
+            outline: none;
+            transition: var(--transition);
+        }
+        .search-bar input:focus {
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px var(--accent-blue-glow);
+        }
+        .search-bar input::placeholder { color: var(--text-muted); }
+        .search-icon {
+            position: absolute;
+            left: 14px; top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 16px;
+        }
+        .search-clear {
+            position: absolute;
+            right: 10px; top: 50%;
+            transform: translateY(-50%);
+            background: var(--bg-elevated);
+            border: none;
+            color: var(--text-secondary);
+            width: 26px; height: 26px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: none;
+            align-items: center; justify-content: center;
+            font-size: 12px;
+        }
+        .search-clear.visible { display: flex; }
+
+        /* ===== QUICK STATS BAR ===== */
+        .stats-bar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+            scrollbar-width: none;
+            -webkit-overflow-scrolling: touch;
+            padding: 2px;
+        }
+        .stats-bar::-webkit-scrollbar { display: none; }
+        .stat-chip {
+            flex-shrink: 0;
+            padding: 8px 14px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            font-size: 0.78em;
+            color: var(--text-secondary);
+            display: flex; align-items: center; gap: 6px;
+            white-space: nowrap;
+        }
+        .stat-chip .stat-num {
+            font-weight: 700;
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .stat-chip .stat-icon { font-size: 14px; }
+
+        /* ===== FILTER TABS ===== */
+        .filter-tabs {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+            scrollbar-width: none;
+            padding: 2px;
+        }
+        .filter-tabs::-webkit-scrollbar { display: none; }
+        .filter-tab {
+            flex-shrink: 0;
+            padding: 9px 18px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text-secondary);
+            font-size: 0.85em;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            font-family: 'Outfit', sans-serif;
+            white-space: nowrap;
+        }
+        .filter-tab:hover { background: var(--bg-card-hover); color: var(--text-primary); }
+        .filter-tab.active {
+            background: var(--text-primary);
+            color: var(--bg-primary);
+            border-color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        /* ===== SECTION HEADERS ===== */
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            margin-top: 8px;
+        }
+        .section-title {
+            font-size: 1em;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .section-title .dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .section-count {
+            font-size: 0.75em;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* ===== LINK CARDS ===== */
+        .links-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 24px;
+        }
+        .link-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+            text-decoration: none;
+            color: inherit;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        .link-card::before {
+            content: '';
+            position: absolute;
+            left: 0; top: 0; bottom: 0;
+            width: 3px;
+            border-radius: 0 3px 3px 0;
+            transition: var(--transition);
+        }
+        .link-card:hover, .link-card:active {
+            background: var(--bg-card-hover);
+            transform: translateX(4px);
+            border-color: rgba(255,255,255,0.1);
+        }
+        .link-card.fav::after {
+            content: '★';
+            position: absolute;
+            top: 8px; right: 10px;
+            font-size: 12px;
+            color: var(--accent-orange);
+        }
+
+        .link-icon {
+            width: 46px; height: 46px;
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px;
+            flex-shrink: 0;
+            position: relative;
+        }
+        .link-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .link-name {
+            font-weight: 600;
+            font-size: 1em;
+            margin-bottom: 3px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .link-desc {
+            font-size: 0.78em;
+            color: var(--text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .link-meta {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+        .link-visits {
+            font-size: 0.72em;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+            display: flex; align-items: center; gap: 4px;
+        }
+        .link-arrow {
+            color: var(--text-muted);
+            font-size: 16px;
+            transition: var(--transition);
+        }
+        .link-card:hover .link-arrow { color: var(--text-primary); transform: translateX(3px); }
+
+        /* COLOR THEMES FOR CARDS */
+        .theme-red .link-icon { background: rgba(255,51,102,0.12); color: var(--accent-red); }
+        .theme-red::before { background: var(--accent-red); }
+        .theme-blue .link-icon { background: rgba(51,102,255,0.12); color: var(--accent-blue); }
+        .theme-blue::before { background: var(--accent-blue); }
+        .theme-cyan .link-icon { background: rgba(0,204,187,0.12); color: var(--accent-cyan); }
+        .theme-cyan::before { background: var(--accent-cyan); }
+        .theme-purple .link-icon { background: rgba(153,51,255,0.12); color: var(--accent-purple); }
+        .theme-purple::before { background: var(--accent-purple); }
+        .theme-orange .link-icon { background: rgba(255,136,51,0.12); color: var(--accent-orange); }
+        .theme-orange::before { background: var(--accent-orange); }
+        .theme-green .link-icon { background: rgba(51,204,102,0.12); color: var(--accent-green); }
+        .theme-green::before { background: var(--accent-green); }
+
+        /* ===== RECENTLY USED ===== */
+        .recent-scroll {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            scrollbar-width: none;
+            padding: 2px 0 12px;
+            margin-bottom: 12px;
+        }
+        .recent-scroll::-webkit-scrollbar { display: none; }
+        .recent-item {
+            flex-shrink: 0;
+            width: 80px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+        }
+        .recent-icon {
+            width: 56px; height: 56px;
+            border-radius: 16px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 24px;
+            transition: var(--transition);
+            position: relative;
+        }
+        .recent-item:hover .recent-icon, .recent-item:active .recent-icon {
+            transform: scale(1.08);
+        }
+        .recent-name {
+            font-size: 0.7em;
+            color: var(--text-secondary);
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 80px;
+        }
+        .recent-time {
+            font-size: 0.6em;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* ===== WATCHLIST ===== */
+        .watchlist-section { margin-bottom: 24px; }
+        .watchlist-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 14px 16px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: var(--transition);
+        }
+        .watchlist-item.completed {
+            opacity: 0.5;
+        }
+        .watchlist-item.completed .wl-name {
+            text-decoration: line-through;
+        }
+        .wl-check {
+            width: 24px; height: 24px;
+            border-radius: 50%;
+            border: 2px solid var(--text-muted);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+            flex-shrink: 0;
+            font-size: 12px;
+            color: transparent;
+        }
+        .wl-check.checked {
+            background: var(--accent-green);
+            border-color: var(--accent-green);
+            color: white;
+        }
+        .wl-info { flex: 1; min-width: 0; }
+        .wl-name {
+            font-weight: 500;
+            font-size: 0.92em;
+            margin-bottom: 2px;
+        }
+        .wl-platform {
+            font-size: 0.72em;
+            color: var(--text-muted);
+        }
+        .wl-delete {
+            width: 30px; height: 30px;
+            border-radius: 8px;
+            border: none;
+            background: rgba(255,51,102,0.1);
+            color: var(--accent-red);
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: var(--transition);
+            font-size: 14px;
+        }
+        .wl-delete:hover { background: rgba(255,51,102,0.2); }
+
+        /* ===== BOTTOM NAV ===== */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            background: rgba(10, 10, 15, 0.92);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0 max(8px, env(safe-area-inset-bottom));
+            z-index: 100;
+        }
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            padding: 6px 16px;
+            border-radius: 12px;
+            transition: var(--transition);
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            font-family: 'Outfit', sans-serif;
+        }
+        .nav-item .nav-icon { font-size: 22px; transition: var(--transition); }
+        .nav-item .nav-label { font-size: 0.65em; font-weight: 500; }
+        .nav-item.active { color: var(--accent-red); }
+        .nav-item.active .nav-icon { transform: translateY(-2px); }
+        .nav-item:hover { color: var(--text-secondary); }
+
+        /* ===== MODALS ===== */
+        .modal-overlay {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 200;
+            display: none;
+            align-items: flex-end;
+            justify-content: center;
+            animation: fadeIn 0.2s ease;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal {
+            background: var(--bg-secondary);
+            border-radius: 20px 20px 0 0;
+            width: 100%;
+            max-width: 520px;
+            max-height: 85vh;
+            overflow-y: auto;
+            padding: 24px 20px max(24px, env(safe-area-inset-bottom));
+            animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .modal-handle {
+            width: 36px; height: 4px;
+            background: var(--text-muted);
+            border-radius: 2px;
+            margin: 0 auto 20px;
+        }
+        .modal-title {
+            font-size: 1.3em;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+        .modal-input {
+            width: 100%;
+            padding: 13px 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.95em;
+            outline: none;
+            margin-bottom: 12px;
+            transition: var(--transition);
+        }
+        .modal-input:focus {
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px var(--accent-blue-glow);
+        }
+        .modal-input::placeholder { color: var(--text-muted); }
+        .modal-label {
+            font-size: 0.8em;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+            display: block;
+            font-weight: 500;
+        }
+        .modal-row { margin-bottom: 16px; }
+        .color-picker {
+            display: flex; gap: 8px; flex-wrap: wrap;
+        }
+        .color-option {
+            width: 36px; height: 36px;
+            border-radius: 10px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: var(--transition);
+        }
+        .color-option:hover { transform: scale(1.1); }
+        .color-option.selected { border-color: white; box-shadow: 0 0 10px rgba(255,255,255,0.3); }
+        .category-picker {
+            display: flex; gap: 8px; flex-wrap: wrap;
+        }
+        .cat-option {
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.85em;
+            transition: var(--transition);
+        }
+        .cat-option.selected {
+            background: var(--text-primary);
+            color: var(--bg-primary);
+            border-color: var(--text-primary);
+        }
+        .modal-btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: var(--radius);
+            font-family: 'Outfit', sans-serif;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-top: 8px;
+        }
+        .modal-btn.primary {
+            background: linear-gradient(135deg, var(--accent-red), var(--accent-purple));
+            color: white;
+            box-shadow: 0 4px 20px var(--accent-red-glow);
+        }
+        .modal-btn.primary:hover { transform: translateY(-2px); box-shadow: 0 6px 25px var(--accent-red-glow); }
+        .modal-btn.secondary {
+            background: var(--bg-card);
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+            margin-top: 8px;
+        }
+        .modal-btn.danger {
+            background: rgba(255,51,102,0.1);
+            color: var(--accent-red);
+        }
+
+        /* ===== CONTEXT MENU ===== */
+        .context-menu {
+            position: fixed;
+            z-index: 300;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 6px;
+            min-width: 200px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            display: none;
+            animation: fadeScale 0.15s ease;
+        }
+        @keyframes fadeScale {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .context-menu.open { display: block; }
+        .ctx-item {
+            padding: 11px 14px;
+            border-radius: 8px;
+            display: flex; align-items: center; gap: 10px;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 0.88em;
+            color: var(--text-primary);
+        }
+        .ctx-item:hover { background: var(--bg-card-hover); }
+        .ctx-item.danger { color: var(--accent-red); }
+        .ctx-icon { font-size: 16px; width: 20px; text-align: center; }
+        .ctx-divider {
+            height: 1px;
+            background: var(--border);
+            margin: 4px 0;
+        }
+
+        /* ===== TOAST ===== */
+        .toast-container {
+            position: fixed;
+            top: 20px; left: 50%;
+            transform: translateX(-50%);
+            z-index: 500;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            pointer-events: none;
+        }
+        .toast {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 12px 20px;
+            display: flex; align-items: center; gap: 10px;
+            font-size: 0.88em;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+            animation: toastIn 0.3s ease, toastOut 0.3s ease 2.5s forwards;
+            pointer-events: auto;
+            white-space: nowrap;
+        }
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes toastOut {
+            from { opacity: 1; transform: translateY(0); }
+            to { opacity: 0; transform: translateY(-20px); }
+        }
+
+        /* ===== PAGES ===== */
+        .page { display: none; }
+        .page.active { display: block; }
+
+        /* ===== SETTINGS ===== */
+        .settings-group {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            margin-bottom: 16px;
+        }
+        .settings-item {
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .settings-item:last-child { border-bottom: none; }
+        .settings-item:hover { background: var(--bg-card-hover); }
+        .settings-left {
+            display: flex; align-items: center; gap: 12px;
+        }
+        .settings-icon {
+            width: 36px; height: 36px;
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px;
+        }
+        .settings-label { font-size: 0.92em; font-weight: 500; }
+        .settings-sublabel { font-size: 0.75em; color: var(--text-muted); }
+        .toggle {
+            width: 48px; height: 28px;
+            border-radius: 14px;
+            background: var(--bg-elevated);
+            border: none;
+            cursor: pointer;
+            position: relative;
+            transition: var(--transition);
+        }
+        .toggle::after {
+            content: '';
+            width: 22px; height: 22px;
+            border-radius: 50%;
+            background: white;
+            position: absolute;
+            top: 3px; left: 3px;
+            transition: var(--transition);
+        }
+        .toggle.on {
+            background: var(--accent-green);
+        }
+        .toggle.on::after {
+            left: 23px;
+        }
+
+        /* ===== RANDOM PICKER ===== */
+        .random-card {
+            background: linear-gradient(135deg, var(--bg-card), var(--bg-elevated));
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 28px 20px;
+            text-align: center;
+            margin-bottom: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+        .random-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, var(--accent-purple-glow), transparent);
+            opacity: 0.3;
+        }
+        .random-emoji {
+            font-size: 48px;
+            margin-bottom: 12px;
+            position: relative;
+        }
+        .random-title {
+            font-size: 1.2em;
+            font-weight: 700;
+            margin-bottom: 6px;
+            position: relative;
+        }
+        .random-subtitle {
+            font-size: 0.82em;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+            position: relative;
+        }
+        .random-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 32px;
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: 'Outfit', sans-serif;
+            transition: var(--transition);
+            position: relative;
+            box-shadow: 0 4px 20px var(--accent-purple-glow);
+        }
+        .random-btn:hover { transform: translateY(-2px); }
+        .random-result {
+            margin-top: 20px;
+            padding: 16px;
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            display: none;
+            position: relative;
+            animation: fadeIn 0.4s ease;
+        }
+        .random-result.visible { display: block; }
+        .random-result-name {
+            font-weight: 600;
+            font-size: 1.1em;
+            margin-bottom: 4px;
+        }
+        .random-result-link {
+            display: inline-block;
+            padding: 10px 24px;
+            margin-top: 10px;
+            background: var(--accent-red);
+            color: white;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.88em;
+            transition: var(--transition);
+        }
+        .random-result-link:hover { transform: translateY(-2px); }
+
+        /* ===== EMPTY STATES ===== */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-muted);
+        }
+        .empty-emoji { font-size: 48px; margin-bottom: 12px; }
+        .empty-text { font-size: 0.92em; }
+
+        /* ===== ANIMATIONS ===== */
+        .link-card, .watchlist-item {
+            animation: cardIn 0.4s ease both;
+        }
+        @keyframes cardIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* STAGGER */
+        .links-grid .link-card:nth-child(1) { animation-delay: 0.02s; }
+        .links-grid .link-card:nth-child(2) { animation-delay: 0.04s; }
+        .links-grid .link-card:nth-child(3) { animation-delay: 0.06s; }
+        .links-grid .link-card:nth-child(4) { animation-delay: 0.08s; }
+        .links-grid .link-card:nth-child(5) { animation-delay: 0.10s; }
+        .links-grid .link-card:nth-child(6) { animation-delay: 0.12s; }
+        .links-grid .link-card:nth-child(7) { animation-delay: 0.14s; }
+        .links-grid .link-card:nth-child(8) { animation-delay: 0.16s; }
+
+        /* ===== SCROLL ===== */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--text-muted); border-radius: 2px; }
+        
+        /* ===== RESPONSIVE ===== */
+        @media (min-width: 600px) {
+            .app-container { padding: 0 24px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="bg-effects"></div>
+<div class="noise"></div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- CONTEXT MENU -->
+<div class="context-menu" id="contextMenu">
+    <div class="ctx-item" onclick="ctxAction('open')"><span class="ctx-icon">🔗</span> Öffnen</div>
+    <div class="ctx-item" onclick="ctxAction('fav')"><span class="ctx-icon" id="ctxFavIcon">⭐</span> <span id="ctxFavText">Favorit</span></div>
+    <div class="ctx-item" onclick="ctxAction('watchlist')"><span class="ctx-icon">📋</span> Zur Watchlist</div>
+    <div class="ctx-item" onclick="ctxAction('copy')"><span class="ctx-icon">📎</span> Link kopieren</div>
+    <div class="ctx-item" onclick="ctxAction('share')"><span class="ctx-icon">📤</span> Teilen</div>
+    <div class="ctx-divider"></div>
+    <div class="ctx-item" onclick="ctxAction('edit')"><span class="ctx-icon">✏️</span> Bearbeiten</div>
+    <div class="ctx-item danger" onclick="ctxAction('delete')"><span class="ctx-icon">🗑️</span> Löschen</div>
+</div>
+
+<div class="app-container">
+
+    <!-- ===== PAGE: HOME ===== -->
+    <div class="page active" id="pageHome">
+        <div class="header">
+            <div class="logo-area">
+                <div class="logo-icon">🎬</div>
+                <span class="logo-text">StreamHub</span>
+            </div>
+            <div class="header-actions">
+                <button class="icon-btn" onclick="openModal('addLink')" title="Link hinzufügen">➕</button>
+                <button class="icon-btn" onclick="toggleEdit()" id="editBtn" title="Bearbeiten">✏️</button>
+            </div>
+        </div>
+
+        <!-- SEARCH -->
+        <div class="search-bar">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="searchInput" placeholder="Suche nach Seiten..." oninput="handleSearch()" autocomplete="off">
+            <button class="search-clear" id="searchClear" onclick="clearSearch()">✕</button>
+        </div>
+
+        <!-- STATS BAR -->
+        <div class="stats-bar" id="statsBar"></div>
+
+        <!-- FILTER TABS -->
+        <div class="filter-tabs" id="filterTabs"></div>
+
+        <!-- RECENTLY USED -->
+        <div id="recentSection" style="display:none">
+            <div class="section-header">
+                <span class="section-title"><span class="dot" style="background:var(--accent-cyan)"></span> Zuletzt besucht</span>
+            </div>
+            <div class="recent-scroll" id="recentScroll"></div>
+        </div>
+
+        <!-- LINKS -->
+        <div id="linksContainer"></div>
+    </div>
+
+    <!-- ===== PAGE: WATCHLIST ===== -->
+    <div class="page" id="pageWatchlist">
+        <div class="header">
+            <div class="logo-area">
+                <span class="logo-text">📋 Watchlist</span>
+            </div>
+            <div class="header-actions">
+                <button class="icon-btn" onclick="openModal('addWatchlist')">➕</button>
+            </div>
+        </div>
+        <div id="watchlistContainer"></div>
+    </div>
+
+    <!-- ===== PAGE: RANDOM ===== -->
+    <div class="page" id="pageRandom">
+        <div class="header">
+            <div class="logo-area">
+                <span class="logo-text">🎲 Zufalls-Picker</span>
+            </div>
+        </div>
+
+        <div class="random-card">
+            <div class="random-emoji">🎰</div>
+            <div class="random-title">Was schauen wir heute?</div>
+            <div class="random-subtitle">Lass das Schicksal entscheiden!</div>
+            <button class="random-btn" onclick="pickRandom()">
+                🎲 Zufällig wählen
+            </button>
+            <div class="random-result" id="randomResult">
+                <div class="random-result-name" id="randomName"></div>
+                <div style="color:var(--text-muted);font-size:0.82em;margin-bottom:4px" id="randomCat"></div>
+                <a class="random-result-link" id="randomLink" href="#" target="_blank" rel="noopener noreferrer">🚀 Jetzt ansehen</a>
+            </div>
+        </div>
+
+        <div style="margin-bottom:12px;">
+            <div class="section-header">
+                <span class="section-title"><span class="dot" style="background:var(--accent-orange)"></span> Filter</span>
+            </div>
+            <div class="filter-tabs" id="randomFilter"></div>
+        </div>
+    </div>
+
+    <!-- ===== PAGE: STATS ===== -->
+    <div class="page" id="pageStats">
+        <div class="header">
+            <div class="logo-area">
+                <span class="logo-text">📊 Statistiken</span>
+            </div>
+            <div class="header-actions">
+                <button class="icon-btn" onclick="resetStats()" title="Zurücksetzen">🔄</button>
+            </div>
+        </div>
+        <div id="statsContent"></div>
+    </div>
+
+    <!-- ===== PAGE: SETTINGS ===== -->
+    <div class="page" id="pageSettings">
+        <div class="header">
+            <div class="logo-area">
+                <span class="logo-text">⚙️ Einstellungen</span>
+            </div>
+        </div>
+
+        <div class="settings-group">
+            <div class="settings-item" onclick="toggleSetting('confirmOpen')">
+                <div class="settings-left">
+                    <div class="settings-icon" style="background:rgba(51,102,255,0.12);color:var(--accent-blue)">🔗</div>
+                    <div>
+                        <div class="settings-label">Öffnen bestätigen</div>
+                        <div class="settings-sublabel">Vor dem Öffnen fragen</div>
+                    </div>
+                </div>
+                <button class="toggle" id="toggleConfirmOpen"></button>
+            </div>
+            <div class="settings-item" onclick="toggleSetting('showVisits')">
+                <div class="settings-left">
+                    <div class="settings-icon" style="background:rgba(0,204,187,0.12);color:var(--accent-cyan)">👁️</div>
+                    <div>
+                        <div class="settings-label">Besuch-Zähler</div>
+                        <div class="settings-sublabel">Zeige Aufrufe bei Links</div>
+                    </div>
+                </div>
+                <button class="toggle" id="toggleShowVisits"></button>
+            </div>
+            <div class="settings-item" onclick="toggleSetting('showRecent')">
+                <div class="settings-left">
+                    <div class="settings-icon" style="background:rgba(153,51,255,0.12);color:var(--accent-purple)">🕐</div>
+                    <div>
+                        <div class="settings-label">Zuletzt besucht</div>
+                        <div class="settings-sublabel">Zeige kürzlich besuchte Seiten</div>
+                    </div>
+                </div>
+                <button class="toggle" id="toggleShowRecent"></button>
+            </div>
+        </div>
+
+        <div class="settings-group">
+            <div class="settings-item" onclick="exportData()">
+                <div class="settings-left">
+                    <div class="settings-icon" style="background:rgba(51,204,102,0.12);color:var(--accent-green)">💾</div>
+                    <div>
+                        <div class="settings-label">Daten exportieren</div>
+                        <div class="settings-sublabel">Als JSON speichern</div>
+                    </div>
+                </div>
+                <span style="color:var(--text-muted)">→</span>
+            </div>
+            <div class="settings-item" onclick="document.getElementById('importFile').click()">
+                <div class="settings-left">
+                    <div class="settings-icon" style="background:rgba(255,136,51,0.12);color:var(--accent-orange)">📂</div>
+                    <div>
+                        <div class="settings-label">Daten importieren</div>
+                        <div class="settings-sublabel">JSON-Datei laden</div>
+                    </div>
+                </div>
+                <span style="color:var(--text-muted)">→</span>
+                <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+            </div>
+        </div>
+
+        <div class="settings-group">
+            <div class="settings-item" onclick="resetAll()">
+                <div class="settings-left">
+                    <div class="settings-icon" style="background:rgba(255,51,102,0.12);color:var(--accent-red)">⚠️</div>
+                    <div>
+                        <div class="settings-label" style="color:var(--accent-red)">Alles zurücksetzen</div>
+                        <div class="settings-sublabel">Alle Daten löschen</div>
+                    </div>
+                </div>
+                <span style="color:var(--text-muted)">→</span>
+            </div>
+        </div>
+
+        <div style="text-align:center;padding:30px 0;color:var(--text-muted);font-size:0.78em;">
+            <div style="font-size:1.5em;margin-bottom:8px;">🎬</div>
+            StreamHub v2.0<br>
+            Made with ❤️ für Marc
+        </div>
+    </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+    <button class="nav-item active" data-page="pageHome">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-label">Home</span>
+    </button>
+    <button class="nav-item" data-page="pageWatchlist">
+        <span class="nav-icon">📋</span>
+        <span class="nav-label">Watchlist</span>
+    </button>
+    <button class="nav-item" data-page="pageRandom">
+        <span class="nav-icon">🎲</span>
+        <span class="nav-label">Zufall</span>
+    </button>
+    <button class="nav-item" data-page="pageStats">
+        <span class="nav-icon">📊</span>
+        <span class="nav-label">Stats</span>
+    </button>
+    <button class="nav-item" data-page="pageSettings">
+        <span class="nav-icon">⚙️</span>
+        <span class="nav-label">Mehr</span>
+    </button>
+</nav>
+
+<!-- MODAL: ADD/EDIT LINK -->
+<div class="modal-overlay" id="modalAddLink">
+    <div class="modal">
+        <div class="modal-handle"></div>
+        <div class="modal-title" id="modalLinkTitle">Link hinzufügen</div>
+        
+        <div class="modal-row">
+            <label class="modal-label">Name</label>
+            <input class="modal-input" id="inputLinkName" placeholder="z.B. Netflix">
+        </div>
+        <div class="modal-row">
+            <label class="modal-label">URL</label>
+            <input class="modal-input" id="inputLinkUrl" placeholder="https://...">
+        </div>
+        <div class="modal-row">
+            <label class="modal-label">Beschreibung (optional)</label>
+            <input class="modal-input" id="inputLinkDesc" placeholder="z.B. Beste Serien-Seite">
+        </div>
+        <div class="modal-row">
+            <label class="modal-label">Kategorie</label>
+            <div class="category-picker" id="catPicker"></div>
+        </div>
+        <div class="modal-row">
+            <label class="modal-label">Icon</label>
+            <input class="modal-input" id="inputLinkIcon" placeholder="z.B. 🎬 oder 🍿" maxlength="4">
+        </div>
+        <div class="modal-row">
+            <label class="modal-label">Farbe</label>
+            <div class="color-picker" id="colorPicker">
+                <div class="color-option" data-color="red" style="background:var(--accent-red)" onclick="selectColor('red')"></div>
+                <div class="color-option" data-color="blue" style="background:var(--accent-blue)" onclick="selectColor('blue')"></div>
+                <div class="color-option" data-color="cyan" style="background:var(--accent-cyan)" onclick="selectColor('cyan')"></div>
+                <div class="color-option" data-color="purple" style="background:var(--accent-purple)" onclick="selectColor('purple')"></div>
+                <div class="color-option" data-color="orange" style="background:var(--accent-orange)" onclick="selectColor('orange')"></div>
+                <div class="color-option" data-color="green" style="background:var(--accent-green)" onclick="selectColor('green')"></div>
+            </div>
+        </div>
+
+        <button class="modal-btn primary" onclick="saveLink()">💾 Speichern</button>
+        <button class="modal-btn secondary" onclick="closeAllModals()">Abbrechen</button>
+    </div>
+</div>
+
+<!-- MODAL: ADD TO WATCHLIST -->
+<div class="modal-overlay" id="modalAddWatchlist">
+    <div class="modal">
+        <div class="modal-handle"></div>
+        <div class="modal-title">Zur Watchlist hinzufügen</div>
+        
+        <div class="modal-row">
+            <label class="modal-label">Titel (Film/Serie)</label>
+            <input class="modal-input" id="inputWlName" placeholder="z.B. Breaking Bad">
+        </div>
+        <div class="modal-row">
+            <label class="modal-label">Plattform (optional)</label>
+            <input class="modal-input" id="inputWlPlatform" placeholder="z.B. BurningSeries">
+        </div>
+        <div class="modal-row">
+            <label class="modal-label">Notiz (optional)</label>
+            <input class="modal-input" id="inputWlNote" placeholder="z.B. Staffel 3 weiterschauen">
+        </div>
+
+        <button class="modal-btn primary" onclick="saveWatchlistItem()">📋 Hinzufügen</button>
+        <button class="modal-btn secondary" onclick="closeAllModals()">Abbrechen</button>
+    </div>
+</div>
+
+<!-- MODAL: ADD CATEGORY -->
+<div class="modal-overlay" id="modalAddCategory">
+    <div class="modal">
+        <div class="modal-handle"></div>
+        <div class="modal-title">Neue Kategorie</div>
+        
+        <div class="modal-row">
+            <label class="modal-label">Name</label>
+            <input class="modal-input" id="inputCatName" placeholder="z.B. Anime">
+        </div>
+        <div class="modal-row">
+            <label class="modal-label">Icon</label>
+            <input class="modal-input" id="inputCatIcon" placeholder="z.B. 🎌" maxlength="4">
+        </div>
+
+        <button class="modal-btn primary" onclick="saveCategory()">✅ Erstellen</button>
+        <button class="modal-btn secondary" onclick="closeAllModals()">Abbrechen</button>
+    </div>
+</div>
+
+<script>
+// ==================== DATA LAYER ====================
+const DEFAULT_LINKS = [
+    { id: 'bs', name: 'BurningSeries', url: 'https://burning-series.io', desc: 'Serien streamen', icon: '🔥', color: 'red', category: 'Serien', visits: 0, lastVisit: null, fav: false },
+    { id: 'dexter', name: 'Dexter', url: 'https://burning-series.io/serie/Dexter', desc: 'Dexter auf BS', icon: '🩸', color: 'red', category: 'Serien', visits: 0, lastVisit: null, fav: false },
+    { id: 'bluey', name: 'Bluey', url: 'https://burning-series.io/serie/Bluey', desc: 'Bluey auf BS', icon: '🐶', color: 'cyan', category: 'Serien', visits: 0, lastVisit: null, fav: false },
+    { id: 'fallout', name: 'Fallout', url: 'https://burning-series.io/serie/Fallout-2024', desc: 'Fallout (2024)', icon: '☢️', color: 'green', category: 'Serien', visits: 0, lastVisit: null, fav: false },
+    { id: 'from', name: 'From', url: 'https://burning-series.io/serie/From', desc: 'From auf BS', icon: '🌲', color: 'purple', category: 'Serien', visits: 0, lastVisit: null, fav: false },
+    { id: 'cineto', name: 'CineTo', url: 'https://cine-to.com', desc: 'Filme streamen', icon: '🎬', color: 'blue', category: 'Filme', visits: 0, lastVisit: null, fav: false },
+    { id: 'kinoger', name: 'KinoGer', url: 'https://kinoger.com', desc: 'Filme & Serien', icon: '🍿', color: 'orange', category: 'Filme & Serien', visits: 0, lastVisit: null, fav: false },
+];
+
+const DEFAULT_CATEGORIES = [
+    { name: 'Serien', icon: '📺' },
+    { name: 'Filme', icon: '🎬' },
+    { name: 'Filme & Serien', icon: '🍿' },
+];
+
+const DEFAULT_SETTINGS = {
+    confirmOpen: false,
+    showVisits: true,
+    showRecent: true,
+};
+
+let links = [];
+let categories = [];
+let watchlist = [];
+let settings = {};
+let recentHistory = [];
+let editingLinkId = null;
+let contextTarget = null;
+let currentFilter = 'Alle';
+let randomFilterCat = 'Alle';
+let editMode = false;
+
+function loadData() {
+    try {
+        links = JSON.parse(localStorage.getItem('sh_links')) || [...DEFAULT_LINKS];
+        categories = JSON.parse(localStorage.getItem('sh_categories')) || [...DEFAULT_CATEGORIES];
+        watchlist = JSON.parse(localStorage.getItem('sh_watchlist')) || [];
+        settings = { ...DEFAULT_SETTINGS, ...(JSON.parse(localStorage.getItem('sh_settings')) || {}) };
+        recentHistory = JSON.parse(localStorage.getItem('sh_recent')) || [];
+    } catch {
+        links = [...DEFAULT_LINKS];
+        categories = [...DEFAULT_CATEGORIES];
+        watchlist = [];
+        settings = { ...DEFAULT_SETTINGS };
+        recentHistory = [];
+    }
+}
+
+function saveData() {
+    localStorage.setItem('sh_links', JSON.stringify(links));
+    localStorage.setItem('sh_categories', JSON.stringify(categories));
+    localStorage.setItem('sh_watchlist', JSON.stringify(watchlist));
+    localStorage.setItem('sh_settings', JSON.stringify(settings));
+    localStorage.setItem('sh_recent', JSON.stringify(recentHistory));
+}
+
+// ==================== NAVIGATION ====================
+const navItems = document.querySelectorAll('.nav-item');
+navItems.forEach(item => {
+    item.addEventListener('click', () => {
+        const page = item.dataset.page;
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(page).classList.add('active');
+        navItems.forEach(n => n.classList.remove('active'));
+        item.classList.add('active');
+        if (page === 'pageStats') renderStats();
+        if (page === 'pageWatchlist') renderWatchlist();
+        if (page === 'pageRandom') renderRandomFilter();
+        if (page === 'pageSettings') updateSettingsUI();
+        window.scrollTo(0, 0);
+    });
+});
+
+// ==================== RENDERING ====================
+function render() {
+    renderStatsBar();
+    renderFilters();
+    renderRecent();
+    renderLinks();
+}
+
+function renderStatsBar() {
+    const bar = document.getElementById('statsBar');
+    const totalVisits = links.reduce((s, l) => s + (l.visits || 0), 0);
+    const favCount = links.filter(l => l.fav).length;
+    const wlCount = watchlist.filter(w => !w.completed).length;
+    bar.innerHTML = `
+        <div class="stat-chip"><span class="stat-icon">🔗</span> <span class="stat-num">${links.length}</span> Links</div>
+        <div class="stat-chip"><span class="stat-icon">👁️</span> <span class="stat-num">${totalVisits}</span> Besuche</div>
+        <div class="stat-chip"><span class="stat-icon">⭐</span> <span class="stat-num">${favCount}</span> Favoriten</div>
+        <div class="stat-chip"><span class="stat-icon">📋</span> <span class="stat-num">${wlCount}</span> Watchlist</div>
+    `;
+}
+
+function renderFilters() {
+    const container = document.getElementById('filterTabs');
+    const cats = ['Alle', '⭐ Favoriten', ...categories.map(c => c.name)];
+    container.innerHTML = cats.map(c =>
+        `<button class="filter-tab ${currentFilter === c ? 'active' : ''}" onclick="setFilter('${c.replace(/'/g, "\\'")}')">${c}</button>`
+    ).join('') + `<button class="filter-tab" onclick="openModal('addCategory')" style="border-style:dashed">+ Kategorie</button>`;
+}
+
+function setFilter(cat) {
+    currentFilter = cat;
+    renderFilters();
+    renderLinks();
+}
+
+function renderRecent() {
+    const section = document.getElementById('recentSection');
+    const scroll = document.getElementById('recentScroll');
+    if (!settings.showRecent || recentHistory.length === 0) {
+        section.style.display = 'none';
+        return;
+    }
+    section.style.display = 'block';
+    const recent = recentHistory.slice(0, 8);
+    scroll.innerHTML = recent.map(r => {
+        const link = links.find(l => l.id === r.id);
+        if (!link) return '';
+        const ago = timeAgo(r.time);
+        return `<a class="recent-item" href="${link.url}" target="_blank" rel="noopener noreferrer" onclick="trackVisit('${link.id}')">
+            <div class="recent-icon" style="background:rgba(${colorRgb(link.color)},0.12);color:var(--accent-${link.color})">${link.icon}</div>
+            <div class="recent-name">${link.name}</div>
+            <div class="recent-time">${ago}</div>
+        </a>`;
+    }).join('');
+}
+
+function renderLinks() {
+    const container = document.getElementById('linksContainer');
+    const searchVal = document.getElementById('searchInput').value.toLowerCase().trim();
+    
+    let filtered = [...links];
+    
+    // Search
+    if (searchVal) {
+        filtered = filtered.filter(l =>
+            l.name.toLowerCase().includes(searchVal) ||
+            l.desc.toLowerCase().includes(searchVal) ||
+            l.url.toLowerCase().includes(searchVal) ||
+            l.category.toLowerCase().includes(searchVal)
+        );
+    }
+    
+    // Filter
+    if (currentFilter === '⭐ Favoriten') {
+        filtered = filtered.filter(l => l.fav);
+    } else if (currentFilter !== 'Alle') {
+        filtered = filtered.filter(l => l.category === currentFilter);
+    }
+
+    if (filtered.length === 0) {
+        container.innerHTML = `<div class="empty-state">
+            <div class="empty-emoji">${searchVal ? '🔍' : '📭'}</div>
+            <div class="empty-text">${searchVal ? 'Keine Ergebnisse für "' + searchVal + '"' : 'Keine Links in dieser Kategorie'}</div>
+        </div>`;
+        return;
+    }
+
+    // Group by category
+    const grouped = {};
+    filtered.forEach(l => {
+        if (!grouped[l.category]) grouped[l.category] = [];
+        grouped[l.category].push(l);
+    });
+
+    // Sort: favs first within each group
+    Object.keys(grouped).forEach(cat => {
+        grouped[cat].sort((a, b) => (b.fav ? 1 : 0) - (a.fav ? 1 : 0));
+    });
+
+    let html = '';
+    for (const [cat, items] of Object.entries(grouped)) {
+        const catData = categories.find(c => c.name === cat);
+        const icon = catData ? catData.icon : '📁';
+        html += `<div class="section-header">
+            <span class="section-title"><span class="dot" style="background:var(--accent-${items[0]?.color || 'blue'})"></span> ${icon} ${cat}</span>
+            <span class="section-count">${items.length}</span>
+        </div>`;
+        html += `<div class="links-grid">`;
+        items.forEach(l => {
+            html += `<a class="link-card theme-${l.color} ${l.fav ? 'fav' : ''}" 
+                href="${l.url}" target="_blank" rel="noopener noreferrer"
+                onclick="handleLinkClick(event, '${l.id}')"
+                oncontextmenu="handleContext(event, '${l.id}')"
+                data-id="${l.id}">
+                <div class="link-icon">${l.icon}</div>
+                <div class="link-info">
+                    <div class="link-name">${l.name}</div>
+                    <div class="link-desc">${l.desc || l.url.replace('https://', '').split('/')[0]}</div>
+                </div>
+                <div class="link-meta">
+                    ${settings.showVisits && l.visits > 0 ? `<span class="link-visits">👁️ ${l.visits}</span>` : ''}
+                    ${editMode ? `<span style="font-size:18px;color:var(--accent-red)" onclick="event.preventDefault();event.stopPropagation();deleteLink('${l.id}')">🗑️</span>` : `<span class="link-arrow">→</span>`}
+                </div>
+            </a>`;
+        });
+        html += `</div>`;
+    }
+    container.innerHTML = html;
+}
+
+// ==================== LINK ACTIONS ====================
+function handleLinkClick(e, id) {
+    if (editMode) {
+        e.preventDefault();
+        editLink(id);
+        return;
+    }
+    if (settings.confirmOpen) {
+        e.preventDefault();
+        const link = links.find(l => l.id === id);
+        if (confirm(`"${link.name}" öffnen?`)) {
+            trackVisit(id);
+            window.open(link.url, '_blank', 'noopener,noreferrer');
+        }
+    } else {
+        trackVisit(id);
+    }
+}
+
+function trackVisit(id) {
+    const link = links.find(l => l.id === id);
+    if (!link) return;
+    link.visits = (link.visits || 0) + 1;
+    link.lastVisit = Date.now();
+    
+    // Update recent history
+    recentHistory = recentHistory.filter(r => r.id !== id);
+    recentHistory.unshift({ id, time: Date.now() });
+    if (recentHistory.length > 20) recentHistory = recentHistory.slice(0, 20);
+    
+    saveData();
+}
+
+function toggleFav(id) {
+    const link = links.find(l => l.id === id);
+    if (!link) return;
+    link.fav = !link.fav;
+    saveData();
+    render();
+    showToast(link.fav ? '⭐ Favorit hinzugefügt' : '💫 Favorit entfernt');
+}
+
+function deleteLink(id) {
+    const link = links.find(l => l.id === id);
+    if (!link) return;
+    if (confirm(`"${link.name}" wirklich löschen?`)) {
+        links = links.filter(l => l.id !== id);
+        recentHistory = recentHistory.filter(r => r.id !== id);
+        saveData();
+        render();
+        showToast('🗑️ Link gelöscht');
+    }
+}
+
+function editLink(id) {
+    const link = links.find(l => l.id === id);
+    if (!link) return;
+    editingLinkId = id;
+    document.getElementById('modalLinkTitle').textContent = 'Link bearbeiten';
+    document.getElementById('inputLinkName').value = link.name;
+    document.getElementById('inputLinkUrl').value = link.url;
+    document.getElementById('inputLinkDesc').value = link.desc || '';
+    document.getElementById('inputLinkIcon').value = link.icon;
+    selectColor(link.color);
+    renderCategoryPicker(link.category);
+    openModal('addLink');
+}
+
+// ==================== SEARCH ====================
+function handleSearch() {
+    const val = document.getElementById('searchInput').value;
+    document.getElementById('searchClear').classList.toggle('visible', val.length > 0);
+    renderLinks();
+}
+function clearSearch() {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('searchClear').classList.remove('visible');
+    renderLinks();
+}
+
+// ==================== EDIT MODE ====================
+function toggleEdit() {
+    editMode = !editMode;
+    document.getElementById('editBtn').classList.toggle('active', editMode);
+    renderLinks();
+    showToast(editMode ? '✏️ Bearbeitungsmodus aktiv' : '✅ Bearbeitungsmodus beendet');
+}
+
+// ==================== MODALS ====================
+function openModal(type) {
+    closeAllModals();
+    if (type === 'addLink') {
+        if (!editingLinkId) {
+            document.getElementById('modalLinkTitle').textContent = 'Link hinzufügen';
+            document.getElementById('inputLinkName').value = '';
+            document.getElementById('inputLinkUrl').value = '';
+            document.getElementById('inputLinkDesc').value = '';
+            document.getElementById('inputLinkIcon').value = '';
+            selectColor('blue');
+        }
+        renderCategoryPicker();
+        document.getElementById('modalAddLink').classList.add('open');
+    } else if (type === 'addWatchlist') {
+        document.getElementById('inputWlName').value = '';
+        document.getElementById('inputWlPlatform').value = '';
+        document.getElementById('inputWlNote').value = '';
+        document.getElementById('modalAddWatchlist').classList.add('open');
+    } else if (type === 'addCategory') {
+        document.getElementById('inputCatName').value = '';
+        document.getElementById('inputCatIcon').value = '';
+        document.getElementById('modalAddCategory').classList.add('open');
+    }
+}
+
+function closeAllModals() {
+    document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('open'));
+    editingLinkId = null;
+}
+
+// Close modal on overlay click
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+    overlay.addEventListener('click', e => {
+        if (e.target === overlay) closeAllModals();
+    });
+});
+
+let selectedColor = 'blue';
+function selectColor(c) {
+    selectedColor = c;
+    document.querySelectorAll('.color-option').forEach(o => {
+        o.classList.toggle('selected', o.dataset.color === c);
+    });
+}
+
+let selectedCategory = '';
+function renderCategoryPicker(preselect) {
+    selectedCategory = preselect || categories[0]?.name || '';
+    const picker = document.getElementById('catPicker');
+    picker.innerHTML = categories.map(c =>
+        `<button class="cat-option ${selectedCategory === c.name ? 'selected' : ''}" onclick="selectCat('${c.name.replace(/'/g, "\\'")}')">${c.icon} ${c.name}</button>`
+    ).join('') + `<button class="cat-option" onclick="closeAllModals();openModal('addCategory')" style="border-style:dashed">+</button>`;
+}
+function selectCat(name) {
+    selectedCategory = name;
+    renderCategoryPicker(name);
+}
+
+function saveLink() {
+    const name = document.getElementById('inputLinkName').value.trim();
+    let url = document.getElementById('inputLinkUrl').value.trim();
+    const desc = document.getElementById('inputLinkDesc').value.trim();
+    const icon = document.getElementById('inputLinkIcon').value.trim() || '🔗';
+    
+    if (!name || !url) { showToast('❌ Name und URL sind Pflicht!'); return; }
+    if (!url.startsWith('http')) url = 'https://' + url;
+    
+    if (editingLinkId) {
+        const link = links.find(l => l.id === editingLinkId);
+        if (link) {
+            link.name = name;
+            link.url = url;
+            link.desc = desc;
+            link.icon = icon;
+            link.color = selectedColor;
+            link.category = selectedCategory;
+        }
+        showToast('✅ Link aktualisiert');
+    } else {
+        links.push({
+            id: 'link_' + Date.now(),
+            name, url, desc, icon,
+            color: selectedColor,
+            category: selectedCategory,
+            visits: 0, lastVisit: null, fav: false
+        });
+        showToast('✅ Link hinzugefügt');
+    }
+    
+    saveData();
+    closeAllModals();
+    render();
+}
+
+function saveCategory() {
+    const name = document.getElementById('inputCatName').value.trim();
+    const icon = document.getElementById('inputCatIcon').value.trim() || '📁';
+    if (!name) { showToast('❌ Name ist Pflicht!'); return; }
+    if (categories.find(c => c.name === name)) { showToast('❌ Kategorie existiert bereits'); return; }
+    categories.push({ name, icon });
+    saveData();
+    closeAllModals();
+    render();
+    showToast('✅ Kategorie erstellt');
+}
+
+// ==================== CONTEXT MENU ====================
+function handleContext(e, id) {
+    e.preventDefault();
+    e.stopPropagation();
+    contextTarget = id;
+    const link = links.find(l => l.id === id);
+    document.getElementById('ctxFavText').textContent = link.fav ? 'Favorit entfernen' : 'Als Favorit';
+    document.getElementById('ctxFavIcon').textContent = link.fav ? '💫' : '⭐';
+    
+    const menu = document.getElementById('contextMenu');
+    const x = Math.min(e.clientX || e.touches?.[0]?.clientX || 100, window.innerWidth - 220);
+    const y = Math.min(e.clientY || e.touches?.[0]?.clientY || 100, window.innerHeight - 300);
+    menu.style.left = x + 'px';
+    menu.style.top = y + 'px';
+    menu.classList.add('open');
+}
+
+// Long press for mobile
+let longPressTimer;
+document.addEventListener('touchstart', e => {
+    const card = e.target.closest('.link-card');
+    if (!card) return;
+    longPressTimer = setTimeout(() => {
+        const id = card.dataset.id;
+        if (id) {
+            navigator.vibrate?.(30);
+            handleContext(e, id);
+        }
+    }, 500);
+}, { passive: true });
+document.addEventListener('touchend', () => clearTimeout(longPressTimer));
+document.addEventListener('touchmove', () => clearTimeout(longPressTimer));
+
+document.addEventListener('click', e => {
+    if (!e.target.closest('.context-menu')) {
+        document.getElementById('contextMenu').classList.remove('open');
+    }
+});
+
+function ctxAction(action) {
+    const id = contextTarget;
+    const link = links.find(l => l.id === id);
+    document.getElementById('contextMenu').classList.remove('open');
+    
+    if (!link) return;
+    
+    switch (action) {
+        case 'open':
+            trackVisit(id);
+            window.open(link.url, '_blank', 'noopener,noreferrer');
+            break;
+        case 'fav':
+            toggleFav(id);
+            break;
+        case 'watchlist':
+            watchlist.push({
+                id: 'wl_' + Date.now(),
+                name: link.name,
+                platform: link.category,
+                note: '',
+                completed: false,
+                added: Date.now()
+            });
+            saveData();
+            showToast('📋 Zur Watchlist hinzugefügt');
+            break;
+        case 'copy':
+            navigator.clipboard?.writeText(link.url).then(() => showToast('📎 Link kopiert!')).catch(() => showToast('❌ Kopieren fehlgeschlagen'));
+            break;
+        case 'share':
+            if (navigator.share) {
+                navigator.share({ title: link.name, url: link.url }).catch(() => {});
+            } else {
+                navigator.clipboard?.writeText(link.url).then(() => showToast('📎 Link kopiert!'));
+            }
+            break;
+        case 'edit':
+            editLink(id);
+            break;
+        case 'delete':
+            deleteLink(id);
+            break;
+    }
+}
+
+// ==================== WATCHLIST ====================
+function renderWatchlist() {
+    const container = document.getElementById('watchlistContainer');
+    if (watchlist.length === 0) {
+        container.innerHTML = `<div class="empty-state">
+            <div class="empty-emoji">📋</div>
+            <div class="empty-text">Deine Watchlist ist leer.<br>Füge Filme oder Serien hinzu!</div>
+        </div>`;
+        return;
+    }
+    
+    const active = watchlist.filter(w => !w.completed);
+    const completed = watchlist.filter(w => w.completed);
+    
+    let html = '';
+    if (active.length > 0) {
+        html += `<div class="section-header"><span class="section-title"><span class="dot" style="background:var(--accent-cyan)"></span> Noch schauen</span><span class="section-count">${active.length}</span></div>`;
+        active.forEach(w => { html += watchlistItemHTML(w); });
+    }
+    if (completed.length > 0) {
+        html += `<div class="section-header" style="margin-top:20px"><span class="section-title"><span class="dot" style="background:var(--accent-green)"></span> Gesehen</span><span class="section-count">${completed.length}</span></div>`;
+        completed.forEach(w => { html += watchlistItemHTML(w); });
+    }
+    container.innerHTML = html;
+}
+
+function watchlistItemHTML(w) {
+    return `<div class="watchlist-item ${w.completed ? 'completed' : ''}">
+        <div class="wl-check ${w.completed ? 'checked' : ''}" onclick="toggleWlComplete('${w.id}')">✓</div>
+        <div class="wl-info">
+            <div class="wl-name">${w.name}</div>
+            ${w.platform ? `<div class="wl-platform">${w.platform}${w.note ? ' • ' + w.note : ''}</div>` : w.note ? `<div class="wl-platform">${w.note}</div>` : ''}
+        </div>
+        <button class="wl-delete" onclick="deleteWlItem('${w.id}')">✕</button>
+    </div>`;
+}
+
+function toggleWlComplete(id) {
+    const item = watchlist.find(w => w.id === id);
+    if (item) {
+        item.completed = !item.completed;
+        saveData();
+        renderWatchlist();
+        showToast(item.completed ? '✅ Als gesehen markiert' : '🔄 Als ungesehen markiert');
+    }
+}
+
+function deleteWlItem(id) {
+    watchlist = watchlist.filter(w => w.id !== id);
+    saveData();
+    renderWatchlist();
+    showToast('🗑️ Entfernt');
+}
+
+function saveWatchlistItem() {
+    const name = document.getElementById('inputWlName').value.trim();
+    const platform = document.getElementById('inputWlPlatform').value.trim();
+    const note = document.getElementById('inputWlNote').value.trim();
+    if (!name) { showToast('❌ Titel ist Pflicht!'); return; }
+    watchlist.push({ id: 'wl_' + Date.now(), name, platform, note, completed: false, added: Date.now() });
+    saveData();
+    closeAllModals();
+    renderWatchlist();
+    showToast('📋 Zur Watchlist hinzugefügt');
+}
+
+// ==================== RANDOM PICKER ====================
+function renderRandomFilter() {
+    const container = document.getElementById('randomFilter');
+    const cats = ['Alle', ...categories.map(c => c.name)];
+    container.innerHTML = cats.map(c =>
+        `<button class="filter-tab ${randomFilterCat === c ? 'active' : ''}" onclick="randomFilterCat='${c.replace(/'/g, "\\'")}';renderRandomFilter()">${c}</button>`
+    ).join('');
+}
+
+function pickRandom() {
+    let pool = [...links];
+    if (randomFilterCat !== 'Alle') {
+        pool = pool.filter(l => l.category === randomFilterCat);
+    }
+    if (pool.length === 0) {
+        showToast('❌ Keine Links zum Auswählen');
+        return;
+    }
+    
+    const btn = document.querySelector('.random-btn');
+    btn.textContent = '🎰 ...';
+    btn.disabled = true;
+    
+    // Animate selection
+    let count = 0;
+    const interval = setInterval(() => {
+        const temp = pool[Math.floor(Math.random() * pool.length)];
+        document.getElementById('randomName').textContent = temp.icon + ' ' + temp.name;
+        count++;
+        if (count > 12) {
+            clearInterval(interval);
+            const pick = pool[Math.floor(Math.random() * pool.length)];
+            document.getElementById('randomName').textContent = pick.icon + ' ' + pick.name;
+            document.getElementById('randomCat').textContent = pick.category + ' • ' + pick.desc;
+            document.getElementById('randomLink').href = pick.url;
+            document.getElementById('randomLink').onclick = () => trackVisit(pick.id);
+            document.getElementById('randomResult').classList.add('visible');
+            btn.innerHTML = '🎲 Nochmal würfeln';
+            btn.disabled = false;
+            navigator.vibrate?.([50, 30, 50]);
+        }
+    }, 80);
+}
+
+// ==================== STATISTICS ====================
+function renderStats() {
+    const container = document.getElementById('statsContent');
+    const totalVisits = links.reduce((s, l) => s + (l.visits || 0), 0);
+    const topLinks = [...links].sort((a, b) => (b.visits || 0) - (a.visits || 0)).slice(0, 5);
+    const catStats = {};
+    links.forEach(l => {
+        if (!catStats[l.category]) catStats[l.category] = { visits: 0, count: 0 };
+        catStats[l.category].visits += (l.visits || 0);
+        catStats[l.category].count++;
+    });
+    
+    const maxVisits = Math.max(...links.map(l => l.visits || 0), 1);
+    
+    let html = '';
+    
+    // Overview cards
+    html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px;">
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;text-align:center;">
+            <div style="font-size:2em;font-weight:800;font-family:'JetBrains Mono',monospace;color:var(--accent-red)">${totalVisits}</div>
+            <div style="font-size:0.78em;color:var(--text-muted);margin-top:4px">Gesamt-Besuche</div>
+        </div>
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;text-align:center;">
+            <div style="font-size:2em;font-weight:800;font-family:'JetBrains Mono',monospace;color:var(--accent-blue)">${links.length}</div>
+            <div style="font-size:0.78em;color:var(--text-muted);margin-top:4px">Gespeicherte Links</div>
+        </div>
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;text-align:center;">
+            <div style="font-size:2em;font-weight:800;font-family:'JetBrains Mono',monospace;color:var(--accent-green)">${links.filter(l=>l.fav).length}</div>
+            <div style="font-size:0.78em;color:var(--text-muted);margin-top:4px">Favoriten</div>
+        </div>
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;text-align:center;">
+            <div style="font-size:2em;font-weight:800;font-family:'JetBrains Mono',monospace;color:var(--accent-orange)">${categories.length}</div>
+            <div style="font-size:0.78em;color:var(--text-muted);margin-top:4px">Kategorien</div>
+        </div>
+    </div>`;
+    
+    // Top visited
+    html += `<div class="section-header"><span class="section-title"><span class="dot" style="background:var(--accent-red)"></span> Meistbesucht</span></div>`;
+    html += `<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:24px;">`;
+    topLinks.forEach((l, i) => {
+        const pct = maxVisits > 0 ? ((l.visits || 0) / maxVisits * 100) : 0;
+        html += `<div style="display:flex;align-items:center;gap:12px;margin-bottom:${i < topLinks.length - 1 ? '14px' : '0'}">
+            <span style="font-size:18px;width:24px;text-align:center">${l.icon}</span>
+            <div style="flex:1;min-width:0;">
+                <div style="font-size:0.88em;font-weight:500;margin-bottom:4px;">${l.name}</div>
+                <div style="height:6px;background:var(--bg-elevated);border-radius:3px;overflow:hidden">
+                    <div style="height:100%;width:${pct}%;background:var(--accent-${l.color});border-radius:3px;transition:width 0.5s ease"></div>
+                </div>
+            </div>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:0.82em;color:var(--text-secondary);min-width:36px;text-align:right">${l.visits || 0}</span>
+        </div>`;
+    });
+    html += `</div>`;
+    
+    // Category breakdown
+    html += `<div class="section-header"><span class="section-title"><span class="dot" style="background:var(--accent-blue)"></span> Nach Kategorie</span></div>`;
+    html += `<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:24px;">`;
+    Object.entries(catStats).forEach(([cat, data], i, arr) => {
+        const catData = categories.find(c => c.name === cat);
+        html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;${i < arr.length - 1 ? 'border-bottom:1px solid var(--border)' : ''}">
+            <span style="font-size:0.9em">${catData?.icon || '📁'} ${cat}</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:0.82em;color:var(--text-secondary)">${data.count} Links • ${data.visits} Besuche</span>
+        </div>`;
+    });
+    html += `</div>`;
+    
+    container.innerHTML = html;
+}
+
+function resetStats() {
+    if (!confirm('Alle Besuchszähler zurücksetzen?')) return;
+    links.forEach(l => { l.visits = 0; l.lastVisit = null; });
+    recentHistory = [];
+    saveData();
+    renderStats();
+    showToast('🔄 Statistiken zurückgesetzt');
+}
+
+// ==================== SETTINGS ====================
+function updateSettingsUI() {
+    document.getElementById('toggleConfirmOpen').classList.toggle('on', settings.confirmOpen);
+    document.getElementById('toggleShowVisits').classList.toggle('on', settings.showVisits);
+    document.getElementById('toggleShowRecent').classList.toggle('on', settings.showRecent);
+}
+
+function toggleSetting(key) {
+    settings[key] = !settings[key];
+    saveData();
+    updateSettingsUI();
+    render();
+}
+
+function exportData() {
+    const data = { links, categories, watchlist, settings, recentHistory, exportDate: new Date().toISOString() };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `streamhub-backup-${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('💾 Daten exportiert');
+}
+
+function importData(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+        try {
+            const data = JSON.parse(ev.target.result);
+            if (data.links) links = data.links;
+            if (data.categories) categories = data.categories;
+            if (data.watchlist) watchlist = data.watchlist;
+            if (data.settings) settings = { ...DEFAULT_SETTINGS, ...data.settings };
+            if (data.recentHistory) recentHistory = data.recentHistory;
+            saveData();
+            render();
+            showToast('📂 Daten importiert');
+        } catch {
+            showToast('❌ Ungültige Datei');
+        }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+}
+
+function resetAll() {
+    if (!confirm('⚠️ ALLE Daten wirklich löschen? Das kann nicht rückgängig gemacht werden!')) return;
+    if (!confirm('Bist du dir sicher?')) return;
+    localStorage.removeItem('sh_links');
+    localStorage.removeItem('sh_categories');
+    localStorage.removeItem('sh_watchlist');
+    localStorage.removeItem('sh_settings');
+    localStorage.removeItem('sh_recent');
+    loadData();
+    render();
+    showToast('🔄 Alles zurückgesetzt');
+}
+
+// ==================== UTILS ====================
+function showToast(msg) {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.textContent = msg;
+    container.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+}
+
+function timeAgo(ts) {
+    if (!ts) return '';
+    const diff = Date.now() - ts;
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'jetzt';
+    if (mins < 60) return mins + 'min';
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return hrs + 'h';
+    const days = Math.floor(hrs / 24);
+    return days + 'd';
+}
+
+function colorRgb(c) {
+    const map = { red: '255,51,102', blue: '51,102,255', cyan: '0,204,187', purple: '153,51,255', orange: '255,136,51', green: '51,204,102' };
+    return map[c] || map.blue;
+}
+
+function genId() { return 'id_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6); }
+
+// ==================== SERVICE WORKER ====================
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('service-worker.js').catch(() => {});
+}
+
+// ==================== INIT ====================
+loadData();
+render();
+</script>
+</body>
+</html>
